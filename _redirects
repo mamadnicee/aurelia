@@ -1,0 +1,4 @@
+# Clean URLs for the site's existing static pages
+/shop    /shop.html    301
+/product /product.html 301
+/home    /index.html   301

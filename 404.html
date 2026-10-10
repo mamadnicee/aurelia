@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#11151b">
+  <meta name="robots" content="noindex">
+  <title>Page not found — STRIDE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .error-page{min-height:calc(100svh - 31px);display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:30px;padding:clamp(32px,8vw,110px) var(--gutter);background:linear-gradient(115deg,var(--ink) 0 55%,#dbe8e9 55% 100%);color:#fff;overflow:hidden}
+    .error-copy{direction:ltr;position:relative;z-index:2}.error-number{font-size:clamp(110px,22vw,260px);line-height:.75;letter-spacing:-.11em;font-weight:900;margin:0 0 34px;color:var(--gold)}
+    .error-copy h1{font-size:clamp(32px,5vw,62px);letter-spacing:-.06em;line-height:1;margin:0 0 18px}.error-copy>p:not(.eyebrow){font-family:'Vazirmatn',sans-serif;line-height:1.9;color:#ddd;max-width:440px}
+    .error-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.error-art{min-height:400px;display:grid;place-items:center;position:relative;perspective:900px;color:var(--ink)}.error-art .orbit{width:min(38vw,420px);border-color:#17242a35}.error-art .shoe{width:min(390px,42vw);transform:rotate(-17deg) rotateY(-18deg)}.error-tag{position:absolute;right:5%;bottom:15%;font-size:9px;letter-spacing:.16em;color:var(--ink)}
+    @media(max-width:650px){.error-page{grid-template-columns:1fr;grid-template-rows:auto 250px;gap:0;padding-top:55px;background:linear-gradient(180deg,var(--ink) 0 58%,#dbe8e9 58% 100%)}.error-number{font-size:clamp(120px,38vw,190px)}.error-art{min-height:250px}.error-art .shoe{width:340px;transform:scale(.78) rotate(-18deg)}.error-art .orbit{width:250px}}
+  </style>
+</head>
+<body>
+  <div class="announcement">STRIDE / KEEP MOVING <span>هر مسیر، یک شروع تازه</span></div>
+  <main class="error-page">
+    <section class="error-copy">
+      <p class="eyebrow">LOST YOUR WAY? — مسیر گم شده؟</p>
+      <p class="error-number">404</p>
+      <h1>This page took a wrong turn.</h1>
+      <p>صفحه‌ای که دنبالش هستی پیدا نشد؛ اما قدم بعدی هنوز با توست.</p>
+      <div class="error-actions">
+        <a class="button button-light" href="index.html">BACK TO HOME <i>↗</i></a>
+        <a class="button button-dark" href="shop.html">SHOP THE COLLECTION <i>↗</i></a>
+      </div>
+    </section>
+    <div class="error-art" aria-hidden="true">
+      <div class="orbit"></div>
+      <div class="shoe shoe-blue"><div class="shoe-upper"></div><div class="shoe-tongue"></div><div class="shoe-sole"></div><div class="shoe-laces"></div><span class="shoe-mark">S.</span></div>
+      <span class="error-tag">OFF THE MAP · BACK ON YOUR FEET</span>
+    </div>
+  </main>
+</body>
+</html>
