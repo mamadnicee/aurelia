@@ -24,7 +24,7 @@
     revealEls.forEach(el => el.classList.add('is-visible'));
   }
 
-  /* ─── Vanilla tilt (pointer-based perspective, no library) ─── */
+  /* ─── Vanilla tilt ─── */
   document.querySelectorAll('[data-tilt]').forEach(card => {
     card.addEventListener('pointermove', e => {
       if (matchMedia('(pointer: coarse)').matches) return;
@@ -42,7 +42,7 @@
     });
   });
 
-  /* ─── Subtle hero parallax ─── */
+  /* ─── Hero parallax ─── */
   const heroArt = document.querySelector('[data-parallax]');
   if (heroArt && !reduced) {
     let busy = false;
@@ -58,7 +58,7 @@
     }, { passive: true });
   }
 
-  /* ─── Magnetic CTA buttons (desktop only) ─── */
+  /* ─── Magnetic CTA buttons ─── */
   if (!reduced && matchMedia('(pointer:fine)').matches) {
     document.querySelectorAll('.magnetic').forEach(b => {
       b.addEventListener('pointermove', e => {
@@ -69,24 +69,24 @@
     });
   }
 
-  /* ─── 3-D shoe viewer — data-driven, GLB-ready ─────────────────────────
+  /* ─── Three.js GLB viewer ───────────────────────────────────────────────
    *
-   *  Convention:
-   *    • Every colour variant needs a <section> (or any block element) with
-   *      data-shoe-color="<name>" somewhere in the page.
-   *    • The viewer canvas/container must carry  data-shoe-viewer.
-   *    • GLB files live in  /models/shoe-<name>.glb
-   *      e.g. shoe-white.glb, shoe-blue.glb, shoe-red.glb, shoe-green.glb
+   *  Requirements in index.html / product.html:
+   *    1. Load Three.js r150+ before this script:
+   *         <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+   *    2. Load GLTFLoader:
+   *         <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+   *    3. Mark the viewer container:
+   *         <div data-shoe-viewer style="width:100%;height:500px"></div>
+   *    4. Mark colour-variant sections:
+   *         <section data-shoe-color="blue"> … </section>
+   *    5. Place GLB files at:
+   *         /models/shoe-<color>.glb   (e.g. shoe-blue.glb, shoe-white.glb)
    *
-   *  When you add a new colour section to the HTML the JS picks it up
-   *  automatically — no further code changes needed.
-   *
-   *  If Three.js + GLTFLoader are available (loaded before this script),
-   *  the real model is rendered.  Otherwise the legacy CSS spin fallback
-   *  stays active so the page never breaks during development.
-   * ─────────────────────────────────────────────────────────────────────── */
+   *  Everything auto-wires from those attributes — no further JS edits needed
+   *  when adding new colour variants.
+   * ────────────────────────────────────────────────────────────────────── */
 
-  // Build the colour → model map from whatever data-shoe-color elements exist.
   const colorSections = document.querySelectorAll('[data-shoe-color]');
   const shoeModels = {};
   colorSections.forEach(el => {
@@ -94,26 +94,33 @@
     if (color) shoeModels[color] = `models/shoe-${color}.glb`;
   });
 
-  // Active colour (default to the first one found, or 'black' as fallback).
-  let activeColor = colorSections.length ? [...colorSections][0].dataset.shoeColor.trim().toLowerCase() : 'black';
+  let activeColor = colorSections.length
+    ? [...colorSections][0].dataset.shoeColor.trim().toLowerCase()
+    : 'black';
 
-  // Viewer element (the section that hosts the Three.js canvas).
   const viewerEl = document.querySelector('[data-shoe-viewer]');
 
-  /**
-   * Loads a GLB into the given Three.js scene, replacing any previous shoe.
-   * Expects Three.js r150+ and GLTFLoader to be available as globals or
-   * imported at the top of your bundle.
-   */
   function loadShoeGLB(scene, color) {
     const path = shoeModels[color];
     if (!path) return;
 
-    // Remove the previous shoe mesh group if present.
     const prev = scene.getObjectByName('__shoe__');
-    if (prev) scene.remove(prev);
+    if (prev) {
+      // Dispose geometry + materials to avoid GPU leaks
+      prev.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+          mats.forEach(m => m.dispose());
+        }
+      });
+      scene.remove(prev);
+    }
 
-    if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') return;
+    if (typeof THREE === 'undefined' || typeof THREE.GLTFLoader === 'undefined') {
+      console.warn('[STRIDE] Three.js or GLTFLoader not found. Load them before main.js.');
+      return;
+    }
 
     const loader = new THREE.GLTFLoader();
     loader.load(
@@ -122,7 +129,7 @@
         const shoe = gltf.scene;
         shoe.name = '__shoe__';
 
-        // Centre and scale to fit a normalised unit box.
+        // Centre + normalise scale
         const box    = new THREE.Box3().setFromObject(shoe);
         const centre = box.getCenter(new THREE.Vector3());
         const size   = box.getSize(new THREE.Vector3());
@@ -137,7 +144,6 @@
     );
   }
 
-  // Initialise Three.js viewer if the container and Three.js are both present.
   if (viewerEl && typeof THREE !== 'undefined') {
     const W = viewerEl.clientWidth  || 600;
     const H = viewerEl.clientHeight || 500;
@@ -152,17 +158,17 @@
     const camera = new THREE.PerspectiveCamera(40, W / H, 0.1, 100);
     camera.position.set(0, 0.4, 3.5);
 
-    // Lighting — two soft area lights, no harsh specular.
-    const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-    const key     = new THREE.DirectionalLight(0xffffff, 1.2);
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const key  = new THREE.DirectionalLight(0xffffff, 1.2);
     key.position.set(3, 5, 4);
-    const fill    = new THREE.DirectionalLight(0xffffff, 0.4);
+    scene.add(key);
+    const fill = new THREE.DirectionalLight(0xffffff, 0.4);
     fill.position.set(-3, 1, -2);
-    scene.add(ambient, key, fill);
+    scene.add(fill);
 
-    // Drag-to-rotate state.
+    // Drag-to-rotate
     let dragging = false, lastX = 0, rotY = 0;
-
     renderer.domElement.addEventListener('pointerdown', e => {
       dragging = true; lastX = e.clientX;
       renderer.domElement.setPointerCapture(e.pointerId);
@@ -175,19 +181,17 @@
     renderer.domElement.addEventListener('pointerup',     () => dragging = false);
     renderer.domElement.addEventListener('pointercancel', () => dragging = false);
 
-    // Resize handling.
-    const ro = new ResizeObserver(() => {
+    // Responsive resize
+    new ResizeObserver(() => {
       const w = viewerEl.clientWidth, h = viewerEl.clientHeight;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-    });
-    ro.observe(viewerEl);
+    }).observe(viewerEl);
 
-    // Load the initial shoe.
     loadShoeGLB(scene, activeColor);
 
-    // Render loop — slow auto-spin when not dragging.
+    // Render loop
     (function loop() {
       requestAnimationFrame(loop);
       const shoe = scene.getObjectByName('__shoe__');
@@ -198,7 +202,7 @@
       renderer.render(scene, camera);
     })();
 
-    // Expose a global so colour-switcher buttons can call it.
+    // Public API for colour switcher buttons
     window.__strideSetColor = color => {
       color = color.trim().toLowerCase();
       if (shoeModels[color] && color !== activeColor) {
@@ -208,13 +212,7 @@
     };
   }
 
-  /* ─── Colour-swatch click handler ──────────────────────────────────────
-   *  Elements with  data-shoe-color="<name>"  act as swatches.
-   *  Clicking one:
-   *    1. swaps the active class for CSS highlight
-   *    2. calls __strideSetColor() if the 3-D viewer is running
-   *    3. falls back to scrolling to / showing the matching section
-   * ─────────────────────────────────────────────────────────────────────── */
+  /* ─── Colour-swatch click handler ─── */
   colorSections.forEach(el => {
     el.addEventListener('click', () => {
       const color = el.dataset.shoeColor.trim().toLowerCase();
@@ -224,7 +222,7 @@
     });
   });
 
-  /* ─── Legacy CSS spin (product.html fallback when no GLB yet) ─── */
+  /* ─── CSS-spin fallback (product.html, no GLB yet) ─── */
   const spin    = document.querySelector('.shoe-spin');
   const gallery = document.querySelector('.gallery-main');
   if (spin && gallery && !viewerEl) {
